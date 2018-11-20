@@ -1,7 +1,7 @@
 import React from 'react'
 import { Switch, Route } from 'react-router-dom'
 import Home from './Home'
-import Messages from './Messages'
+import Chats from './Chats'
 import SignUp from './SignUp'
 
 // The Main component renders one of the three provided
@@ -13,7 +13,7 @@ const Main = () => (
   <main>
     <Switch>
       <Route exact path='/' component={Home}/>
-      <Route path='/messages' component={Messages}/>
+      <Route path='/chattingroom' component={Chats}/>
       <Route path='/signup' component={SignUp}/>
     </Switch>
   </main>

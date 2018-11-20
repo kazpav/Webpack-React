@@ -8,7 +8,7 @@ const Header = () => (
     <nav>
       <ul>
         <li><Link to='/'>Home</Link></li>
-        <li><Link to='/messages'>Messages</Link></li>
+        <li><Link to='/chattingroom'>Chatting Room</Link></li>
         <li><Link to='/signup'>Sign Up</Link></li>
         <button className="ui buttons active">Button test</button>
       </ul>

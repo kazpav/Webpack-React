@@ -76,32 +76,32 @@ this.setState({repeatPassword:val});
 
   render() {
     return (
-  <div >
-    <Header as='h1'> Light messenger</Header>
-    <Grid verticalAlign='middle' columns={1} centered >
-      <Form onSubmit={this.handleSubmit}>
-        <Form.Field>
-          <label>Name:</label>
-          <input placeholder="Name" type="text" value={this.state.name} onChange={this.onNameChange}/>
-        </Form.Field>
-        <Form.Field>
-          <label>Email:</label>
-          <input placeholder="Email" type="text" value={this.state.email} onChange={this.onEmailChange}/>
-        </Form.Field>
-        <Form.Field>
-          <label>Password:</label>
-          <input placeholder="Password" type="text" value={this.state.password} onChange={this.onPasswordChange}/>
-        </Form.Field>
-        <Form.Field>
-          <label>Repeat Password:</label>
-          <input placeholder="Repeat Password" type="text" value={this.state.repeatPassword} onChange={this.onRepeatPasswordChange}/>
-        </Form.Field>
-        <Button primary type="submit">
-          Sign Up
-        </Button>
-      </Form>
-    </Grid>
-  </div>
+      <div >
+        <Header as='h1'> Light messenger</Header>
+        <Grid verticalAlign='middle' columns={1} centered >
+          <Form onSubmit={this.handleSubmit}>
+            <Form.Field>
+              <label>Name:</label>
+              <input placeholder="Name" type="text" value={this.state.name} onChange={this.onNameChange}/>
+            </Form.Field>
+            <Form.Field>
+              <label>Email:</label>
+              <input placeholder="Email" type="text" value={this.state.email} onChange={this.onEmailChange}/>
+            </Form.Field>
+            <Form.Field>
+              <label>Password:</label>
+              <input placeholder="Password" type="text" value={this.state.password} onChange={this.onPasswordChange}/>
+            </Form.Field>
+            <Form.Field>
+              <label>Repeat Password:</label>
+              <input placeholder="Repeat Password" type="text" value={this.state.repeatPassword} onChange={this.onRepeatPasswordChange}/>
+            </Form.Field>
+            <Button primary type="submit">
+              Sign Up
+            </Button>
+          </Form>
+        </Grid>
+      </div>
     );
   }
 }

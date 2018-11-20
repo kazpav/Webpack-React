@@ -41,7 +41,7 @@ return (
     <h1>{`/messages/${this.props.chatId}`}</h1>
     <ul>
       {this.state.messages.map(message =>
-        <li key={message.id}>User id: {message.userId} : {message.text}</li>
+        <li key={message.id}>User id: {message.userId} : {message.text} : {message.date}</li>
       )}
     </ul>
   </div>
