@@ -1,6 +1,10 @@
-import React from 'react'
-import  {Button, Form, Grid, Header}  from 'semantic-ui-react'
-import axios from 'axios'
+import React from 'react';
+import  {Button, Form, Grid, Header}  from 'semantic-ui-react';
+import axios from 'axios';
+import './signUpStyles.css';
+import { Redirect, Link } from 'react-router-dom'
+
+
 
 class SignUp extends React.Component {
   constructor(props) {
@@ -77,9 +81,9 @@ this.setState({repeatPassword:val});
   render() {
     return (
       <div >
-        <Header as='h1'> Light messenger</Header>
-        <Grid verticalAlign='middle' columns={1} centered >
-          <Form onSubmit={this.handleSubmit}>
+
+        <Grid verticalAlign='middle' columns={1} centered   >
+          <Form onSubmit={this.handleSubmit} className="signUpBox">
             <Form.Field>
               <label>Name:</label>
               <input placeholder="Name" type="text" value={this.state.name} onChange={this.onNameChange}/>
@@ -96,6 +100,9 @@ this.setState({repeatPassword:val});
               <label>Repeat Password:</label>
               <input placeholder="Repeat Password" type="text" value={this.state.repeatPassword} onChange={this.onRepeatPasswordChange}/>
             </Form.Field>
+            <p>
+              <Link to='/login'>Have an account? Sing in!</Link>
+            </p>
             <Button primary type="submit">
               Sign Up
             </Button>

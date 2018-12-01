@@ -1,8 +1,11 @@
 import React from 'react'
 import axios from 'axios'
 import Chat from './Chat'
-import {Header, Table, Grid, Button, TextArea, Form} from 'semantic-ui-react'
+import {Header, Table, Grid, Button, TextArea, Form, Segment, Divider} from 'semantic-ui-react'
 import './mystyles.css';
+import ScrollToBottom from 'react-scroll-to-bottom';
+import {ACCESS_TOKEN, CURRENT_USER_ID} from '../constants';
+
 
 class Messages extends React.Component {
 
@@ -15,55 +18,78 @@ this.state = {
   choosedChat: "",
   messageToSend: "",
   offset: 0,
+  lastMessage: "null",
+  topMessage: "",
+  messageGroups:[],
+  loadedHistory:[],
+  moreMessages: [],
+  recentMessages: []
 };
 this.onMessageToSendChange = this.onMessageToSendChange.bind(this);
 this.onSendMessageClick = this.onSendMessageClick.bind(this);
 this.onLoadMoreClick = this.onLoadMoreClick.bind(this);
+this.updateMessages = this.updateMessages.bind(this);
 console.log("Constructor in messages called");
 }
 
 componentDidMount() {
-
-// this.getMessages();
-
-// COMMENTED BY NOW
-  // axios.get('http://localhost:8080/messages/'+'1')
-  // .then(res => {
-  //   const messages = res.data;
-  //   this.setState({messages});
-  // })
-  // console.log('Get method called on ${this.props.chatId} chat');
 }
 
 onLoadMoreClick(e){
-  this.setState({offset:(this.state.offset+10)});
-  console.log("clicked "+this.state.offset);
+  this.setState({offset:(this.state.offset+10)}, function(){
+    console.log("clicked "+this.state.offset);
+  });
+
 }
 
 getMessages(param){
+  this.setState({loadedHistory:[]});
   console.log("PARAM IN GETMESSAGES "+param);
-  axios.get('http://localhost:8080/messages/'+param)
+  axios.get('http://localhost:8080/api/messages/'+param+'/5',{ headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN)}})
   .then(res => {
     const messages = res.data.reverse();
-    this.setState({messages});
+    console.log(messages);
+    this.setState({messages}, function(){
+      this.setState({topMessage:this.state.messages[0]}, function(){
+
+        console.log("ARRAY length "+this.state.messages.length);
+        console.log("top MESSAGE "+JSON.stringify(this.state.topMessage));
+        var headers = {
+         'Access-Control-Allow-Origin': '*',
+         // 'Accept': 'application/json',
+         'Content-Type': 'application/json',
+       }
+       console.log("JSON that comes in POST request "+JSON.stringify(this.state.topMessage));
+       if(this.state.topMessage!==undefined){
+          axios.get("http://localhost:8080/api/messages_groups/"+param+"/"+this.state.topMessage.id , { headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN)}})
+            .then(res => {
+              const  messageGroups = res.data;
+              this.setState({messageGroups});
+            })
+        }
+      })
+      this.setState({lastMessage:this.state.messages[this.state.messages.length-1]}, function(){
+        console.log("Last message "+JSON.stringify(this.state.lastMessage));
+      })
+    });
   })
-  console.log('Ajax call getMessages done');
+
 }
 
  componentWillReceiveProps(nextProps){
+   this.setState({recentMessages:[]})
+   this.setState({lastMessage: ""});
    console.log("componentWillReceiveProps called");
    console.log("nextProps: "+nextProps.chatId);
    console.log("this.props.chatId: "+this.props.chatId);
+   setInterval( this.updateMessages, 10000);
+   this.setState({messageGroups:[]});
    this.getMessages(nextProps.chatId);
    if(nextProps.chatId!=this.props.chatId){
      this.setState({offset:0});
-     // var x = nextProps.chatId;
-     // console.log("VAR X "+x);
-     // this.setState({choosedChat : x}, function(){});
-     // console.log("CHOOSED CHAT STATE"+this.state.choosedChat);
-     // this.props.chatId = x;
-     // this.getMessages();
-   }
+ }
+}
+ componentDidUpdate(){
  }
 onMessageToSendChange(e){
   var val = e.target.value;
@@ -76,17 +102,11 @@ onSendMessageClick(e){
 
   var currentTime = new Date();
   console.log(currentTime);
-  console.log("EXECUTING YEAR "+currentTime.getFullYear());
-  console.log("EXECUTING MONTH "+(currentTime.getMonth()+1));
-  console.log("EXECUTING DAY "+currentTime.getDate());
-  console.log("EXECUTING HOURS "+currentTime.getHours());
-  console.log("EXECUTING Minutes "+currentTime.getMinutes());
-  console.log("EXECUTING Seconds "+currentTime.getSeconds());
 
-  var formattedDate = currentTime.getFullYear()+'-'+(currentTime.getMonth()+1)+'-'+currentTime.getDate()+'@'+currentTime.getHours()+':'+currentTime.getMinutes()+':'+currentTime.getSeconds();
+  var formattedDate = currentTime.getFullYear()+'-'+(currentTime.getMonth()+1)+'-'+currentTime.getDate()+' '+currentTime.getHours()+':'+currentTime.getMinutes()+':'+currentTime.getSeconds();
   var data ={
     text: this.state.messageToSend,
-    userId: '1',
+    userId: localStorage.getItem(CURRENT_USER_ID),
     chatId: this.props.chatId,
     date: formattedDate,
   }
@@ -96,11 +116,49 @@ onSendMessageClick(e){
    // 'Accept': 'application/json',
    'Content-Type': 'application/json',
  }
- axios.post("http://localhost:8080/message", data, {headers:headers})
+ axios.post("http://localhost:8080/api/message", data, { headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN)}})
    .then(res => {
      console.log(res);
      console.log(res.data);
    })
+
+  this.setState({messageToSend : ""});
+}
+
+onLoadGroupClick(group){
+  console.log(group);
+  var headers = {
+   'Access-Control-Allow-Origin': '*',
+   // 'Accept': 'application/json',
+   'Content-Type': 'application/json',
+ }
+  axios.get("http://localhost:8080/api/messages_of_group/"+this.props.chatId+"/"+group.start_id+"/"+group.end_id, { headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN)}})
+  .then(res=>{
+    const loadedHistory = res.data.reverse();
+    console.log(loadedHistory);
+    this.setState({loadedHistory});
+  })
+}
+
+updateMessages(e){
+  if(typeof(this.state.lastMessage)!=='undefined'){
+    console.log("UPDATE MESSAGE CALLED");
+    console.log("LAST MESSAGE" +JSON.stringify(this.state.lastMessage));
+
+    axios.get("http://localhost:8080/api/messages_after/"+this.props.chatId+"/"+this.state.lastMessage.id, { headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN)}})
+    .then(res=>{
+      const recentMessages = res.data.reverse();
+      console.log(recentMessages);
+      this.setState({recentMessages});
+    })
+
+  }else{
+    console.log("WON'T UPDATE ");
+  }
+}
+componentWillUnmount(){
+  console.log("UNMOUTHED COMPONENTTTT");
+  this.setState({lastMessage: ""});
 }
 
 render() {
@@ -112,23 +170,84 @@ if(this.props.chatId === ""){
     </div>
   );
 }else{
-  // this.getMessages();
-  // console.log('Render method called on');
+
   return(
     <div>
       <h1>{`/messages/${this.props.chatId}`}</h1>
-        <div className="messageScrollBox">
-            <Button primary fluid onClick={this.onLoadMoreClick}>
-              Load More
-            </Button>
+        <ScrollToBottom  className="messageScrollBox" id="messageScrollBox">
+            {this.state.messageGroups.map(group=>
+            <Segment textAlign='center' key={group.firstMessageDate} onClick={() => this.onLoadGroupClick(group)}>
+              Messages from {group.firstMessageDate} to {group.lastMessageDate} ({group.count})
+            </Segment>
+            )}
+            {this.state.loadedHistory === [] ?
+              <div></div> : this.state.loadedHistory.map(mess=>
+                 <Grid  key={mess.id}>
+                   <Grid.Column width={7} floated={JSON.stringify(mess.userId)===localStorage.getItem(CURRENT_USER_ID) ? 'right' : 'left'}  className={JSON.stringify(mess.userId)===localStorage.getItem(CURRENT_USER_ID) ? "box sb1" : "box sb2"}>
+                   <Grid verticalAlign='middle' columns={3} centered>
+                     <Grid.Row>
+                       <Grid.Column floated='left'>
+                         UserId {mess.userId}
+                       </Grid.Column>
+                       <Grid.Column floated='rigt'>
+                          {mess.date}
+                       </Grid.Column>
+                     </Grid.Row>
+                     <Grid.Row>
+                          {mess.text}
+                     </Grid.Row>
+                   </Grid>
+                   </Grid.Column>
+                 </Grid>
+               )
+            }
+            <Divider horizontal> Recent Messages </Divider>
             {this.state.messages.map(message =>
               <Grid  key={message.id}>
-                <Grid.Column width={5} floated={message.userId===1 ? 'right' : 'left'}  className={message.userId===1 ? "box sb1" : "box sb2"}>
-                  User id: {message.userId} : {message.text} : {message.date} : Chat Id {message.chatId}
+                <Grid.Column width={7} floated={JSON.stringify(message.userId)===localStorage.getItem(CURRENT_USER_ID) ? 'right' : 'left'}  className={JSON.stringify(message.userId)===localStorage.getItem(CURRENT_USER_ID) ? "box sb1" : "box sb2"}>
+                  <Grid verticalAlign='middle' columns={3} centered>
+                    <Grid.Row>
+                      <Grid.Column floated='left'>
+                        UserId {message.userId}
+                      </Grid.Column>
+
+                      <Grid.Column floated='rigt'>
+                         {message.date}
+                      </Grid.Column>
+                    </Grid.Row>
+                    <Grid.Row>
+
+                         {message.text}
+
+                    </Grid.Row>
+                  </Grid>
                 </Grid.Column>
               </Grid>
             )}
-        </div>
+          
+          {this.state.recentMessages === [] ?
+            <div></div> : this.state.recentMessages.map(recMess=>
+               <Grid  key={recMess.id}>
+                 <Grid.Column width={7} floated={JSON.stringify(recMess.userId)===localStorage.getItem(CURRENT_USER_ID) ? 'right' : 'left'}  className={JSON.stringify(recMess.userId)===localStorage.getItem(CURRENT_USER_ID) ? "box sb1" : "box sb2"}>
+                 <Grid verticalAlign='middle' columns={3} centered>
+                   <Grid.Row>
+                     <Grid.Column floated='left'>
+                       UserId {recMess.userId}
+                     </Grid.Column>
+                     <Grid.Column floated='rigt'>
+                        {recMess.date}
+                     </Grid.Column>
+                   </Grid.Row>
+                   <Grid.Row>
+                        {recMess.text}
+                   </Grid.Row>
+                 </Grid>
+                 </Grid.Column>
+               </Grid>
+             )
+          }
+            <div ref={(el) => { this.messagesEnd = el; }}> </div>
+        </ScrollToBottom >
         <Grid>
           <Grid.Column>
             <Form onSubmit={this.onSendMessageClick}>
@@ -167,7 +286,13 @@ class Chats extends React.Component{
   //     const messages =res;
   //     this.setState({ messages: messages });
   //   });
-    axios.get('http://localhost:8080/chats/'+"1")
+  console.log("ACESS TOKEN IN CHATS "+localStorage.getItem(ACCESS_TOKEN));
+  // var headers = {
+  //   'Access-Control-Allow-Origin': '*',
+  //   'Authorization': "Bearer "+localStorage.getItem(ACCESS_TOKEN),
+  //   'Content-Type': 'application/json',
+  // }
+    axios.get("http://localhost:8080/api/chats_of_user",  { headers: { Authorization:  'Bearer '+localStorage.getItem(ACCESS_TOKEN) } })
     .then(res => {
       const chats = res.data;
       this.setState({chats});
@@ -204,12 +329,11 @@ class Chats extends React.Component{
 
           <Table.Body>
             {this.state.chats.map(chat =>
-              <Table.Row key={chat.id}>
+              <Table.Row key={chat.id} onClick={() => this.clickHandler(chat.id)}>
                 <Table.Cell>
                   <Header>
                     <Header.Content>
                       Chat id: {chat.id} : {chat.name}
-                      <Button onClick={() => this.clickHandler(chat.id)}> Choose </Button>
                       <Header.Subheader>
                         Message will be here
                       </Header.Subheader>
